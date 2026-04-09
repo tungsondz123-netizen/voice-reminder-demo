@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <title>Phone Mic Test</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    body {
+      background:
+        radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 32%),
+        linear-gradient(180deg, #081120 0%, #0f172a 100%);
+      color: #e2e8f0;
+    }
+
+    .phone-shell {
+      width: min(560px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 20px 0 32px;
+    }
+
+    .phone-panel {
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 28px;
+      padding: 20px;
+      box-shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
+    }
+
+    .phone-title {
+      margin: 0 0 10px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+    }
+
+    .phone-copy,
+    .phone-help,
+    .record-details,
+    .recordings-list li {
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    .phone-help,
+    .record-details {
+      margin: 0 0 16px;
+    }
+
+    .phone-chip {
+      display: inline-flex;
+      margin-bottom: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .phone-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .phone-button {
+      min-height: 56px;
+      border: 0;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .phone-button.primary {
+      background: linear-gradient(135deg, #fb7185, #ef4444);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .phone-button.secondary {
+      background: rgba(148, 163, 184, 0.14);
+      color: #e2e8f0;
+    }
+
+    .phone-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .phone-status,
+    .phone-warning {
+      margin-bottom: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+    }
+
+    .phone-status {
+      background: rgba(56, 189, 248, 0.12);
+      color: #e0f2fe;
+      border: 1px solid rgba(56, 189, 248, 0.22);
+    }
+
+    .phone-warning {
+      background: rgba(251, 113, 133, 0.12);
+      color: #fecdd3;
+      border: 1px solid rgba(251, 113, 133, 0.22);
+    }
+
+    .phone-meter {
+      width: 100%;
+      height: 14px;
+      margin: 12px 0 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(148, 163, 184, 0.12);
+    }
+
+    .phone-meter-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #38bdf8, #22c55e, #f97316);
+      transition: width 80ms linear;
+    }
+
+    .audio-preview {
+      width: 100%;
+      margin: 16px 0 8px;
+    }
+
+    .recordings-list {
+      margin: 14px 0 0;
+      padding-left: 18px;
+    }
+  </style>
+</head>
+<body>
+  <main class="phone-shell">
+    <section class="phone-panel">
+      <span class="phone-chip">iPhone Mic Test</span>
+      <h1 class="phone-title">Test mic và thu âm trực tiếp trên điện thoại</h1>
+      <p class="phone-copy">
+        Trang này chỉ kiểm tra microphone thật trên điện thoại: xin quyền mic, đo mức âm, thu âm và phát lại.
+      </p>
+      <p class="phone-help">
+        Dùng <strong>Safari trên iPhone</strong>. Khi mở trang, bấm bắt đầu, nói vài câu, dừng lại rồi nghe playback.
+      </p>
+
+      <div id="statusBox" class="phone-status">Đang kiểm tra khả năng hỗ trợ của trình duyệt.</div>
+      <div id="warningBox" class="phone-warning" hidden></div>
+
+      <div class="phone-meter" aria-hidden="true">
+        <div id="meterFill" class="phone-meter-fill"></div>
+      </div>
+      <p id="meterText" class="record-details">Mức âm: 0%</p>
+
+      <div class="phone-actions">
+        <button id="startBtn" class="phone-button primary" type="button">Bắt đầu test mic</button>
+        <button id="stopBtn" class="phone-button secondary" type="button" disabled>Dừng và lưu file</button>
+      </div>
+
+      <audio id="playback" class="audio-preview" controls></audio>
+      <p id="recordDetails" class="record-details">Chưa có bản ghi.</p>
+
+      <ul class="recordings-list">
+        <li>Mục tiêu của trang này là xác nhận iPhone có thu đúng giọng bạn hay không.</li>
+        <li>Nếu thanh mức âm nhảy và playback nghe được, phần mic trên điện thoại đã ổn.</li>
+        <li>Phần speech-to-text nên làm bước sau, tốt nhất là native iOS hoặc backend STT.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script type="module" src="./src/phone-test.js"></script>
+</body>
+</html>

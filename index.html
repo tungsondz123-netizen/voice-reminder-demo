@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f2ede4">
+  <title>Voice Reminder Notes</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Voice Notes Demo</p>
+        <h1>Ghi nhanh, chuyển chữ, đề xuất nhắc việc</h1>
+        <p class="hero-copy">
+          Bản demo web cho luồng ghi chú bằng giọng nói trên điện thoại, ưu tiên kiến trúc sạch để sau này chuyển sang iPhone native.
+        </p>
+      </div>
+      <button id="notificationBtn" class="secondary-button">Bật thông báo</button>
+    </header>
+
+    <main class="grid">
+      <section class="panel recorder-panel">
+        <div class="section-heading">
+          <p class="eyebrow">Ghi Mới</p>
+          <h2>Bắt ý tưởng trong vài giây</h2>
+        </div>
+
+        <button id="recordBtn" class="record-button" aria-pressed="false">
+          <span class="record-ring"></span>
+          <span id="recordLabel">Bắt đầu ghi</span>
+        </button>
+
+        <div class="status-strip">
+          <span id="recordingStatus">Sẵn sàng ghi âm</span>
+          <span id="recordingTimer">00:00</span>
+        </div>
+
+        <div id="supportMessage" class="support-message is-hidden"></div>
+
+        <div class="diagnostic-panel">
+          <div class="diagnostic-row">
+            <button id="testMicBtn" class="secondary-button" type="button">Kiểm tra mic</button>
+            <span id="micStatus" class="mic-status">Chưa kiểm tra microphone.</span>
+          </div>
+          <div class="level-meter" aria-hidden="true">
+            <div id="levelFill" class="level-fill"></div>
+          </div>
+        </div>
+
+        <label class="field-label" for="transcriptInput">Transcript</label>
+        <textarea id="transcriptInput" rows="5" placeholder="Nội dung sẽ xuất hiện ở đây. Bạn cũng có thể tự sửa bằng tay."></textarea>
+
+        <div id="reminderSuggestion" class="suggestion-card is-hidden">
+          <p class="eyebrow">Đề xuất nhắc việc</p>
+          <h3 id="suggestionTitle">Chưa phát hiện</h3>
+          <p id="suggestionDateText"></p>
+        </div>
+
+        <div class="action-row">
+          <button id="analyzeBtn" class="secondary-button">Phân tích thời gian</button>
+          <button id="saveBtn" class="primary-button">Lưu ghi chú</button>
+        </div>
+      </section>
+
+      <section class="panel notes-panel">
+        <div class="section-heading">
+          <p class="eyebrow">Kho Ghi Chú</p>
+          <h2>Inbox và reminder đã tạo</h2>
+        </div>
+
+        <div class="search-row">
+          <input id="searchInput" type="search" placeholder="Tìm theo nội dung hoặc ngày">
+        </div>
+
+        <div class="list-columns">
+          <div>
+            <h3 class="list-title">Ghi chú gần nhất</h3>
+            <div id="notesList" class="stack-list"></div>
+          </div>
+          <div>
+            <h3 class="list-title">Việc sắp tới</h3>
+            <div id="remindersList" class="stack-list"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="emptyStateTemplate">
+    <div class="empty-state">Chưa có dữ liệu.</div>
+  </template>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
