@@ -57,6 +57,35 @@ Trang test mic riêng nếu cần:
 
 - `phone-test.html`
 
+## Transcription bằng OpenAI
+
+Nếu muốn speech-to-text chạy ổn định trên iPhone, nên dùng backend thay vì phụ thuộc hoàn toàn vào Safari speech recognition.
+
+Repo này đã có sẵn endpoint serverless:
+
+- `api/transcribe.js`
+
+Endpoint này gọi OpenAI Speech-to-Text theo tài liệu chính thức:
+
+- [Speech to text guide](https://platform.openai.com/docs/guides/speech-to-text)
+- [Create transcription API reference](https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions/methods/create)
+
+Model đang dùng:
+
+- `gpt-4o-mini-transcribe`
+
+Để phần này chạy được, deploy repo lên `Vercel` rồi thêm biến môi trường:
+
+```text
+OPENAI_API_KEY=your_key_here
+```
+
+Sau khi deploy trên Vercel, dùng nút:
+
+- `Chuyen audio thanh chu (AI)`
+
+Lưu ý: nút này sẽ không hoạt động trên GitHub Pages vì GitHub Pages không chạy server-side function.
+
 ## Ghi chú kỹ thuật
 
 - Web demo trên iPhone phù hợp để test `ghi âm`, `UI`, `luồng note`, `playback` và `reminder parser`.

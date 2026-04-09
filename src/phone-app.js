@@ -24,6 +24,7 @@ const elements = {
   analyzeBtn: document.querySelector("#analyzeBtn"),
   saveBtn: document.querySelector("#saveBtn"),
   speechBtn: document.querySelector("#speechBtn"),
+  transcribeBtn: document.querySelector("#transcribeBtn"),
   nativeAudioInput: document.querySelector("#nativeAudioInput"),
   nativeRecordBtn: document.querySelector("#nativeRecordBtn"),
   notesList: document.querySelector("#notesList"),
@@ -68,6 +69,11 @@ function setWarning(message) {
   }
   elements.warningBox.hidden = false;
   elements.warningBox.textContent = message;
+}
+
+function setBusyTranscription(isBusy) {
+  elements.transcribeBtn.disabled = isBusy;
+  elements.transcribeBtn.textContent = isBusy ? "Dang chuyen thanh chu..." : "Chuyen audio thanh chu (AI)";
 }
 
 function renderSuggestion() {
@@ -267,6 +273,49 @@ elements.speechBtn.addEventListener("click", () => {
   speechRecognition.start(elements.transcriptInput.value);
 });
 
+elements.transcribeBtn.addEventListener("click", async () => {
+  setWarning("");
+
+  if (!state.draftAudio?.blob) {
+    setWarning("Can co file audio truoc khi chuyen thanh chu. Hay ghi am hoac chon audio tu iPhone.");
+    return;
+  }
+
+  if (window.location.hostname.endsWith("github.io")) {
+    setWarning("Ban dang mo ban GitHub Pages. Backend transcription chi chay khi deploy repo nay tren Vercel.");
+    return;
+  }
+
+  setBusyTranscription(true);
+  setStatus("Dang gui audio len AI de transcribe...");
+
+  try {
+    const formData = new FormData();
+    const filename = state.draftAudio.blob.type.includes("webm") ? "voice-note.webm" : "voice-note.m4a";
+    formData.append("file", state.draftAudio.blob, filename);
+    formData.append("prompt", "Day la ghi chu nhanh bang tieng Viet. Hay tra ve transcript tieng Viet ro rang, giu nguyen y nghia.");
+
+    const response = await fetch("/api/transcribe", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || "Khong the transcribe audio luc nay.");
+    }
+
+    elements.transcriptInput.value = data.text || "";
+    analyzeTranscript();
+    setStatus("Da nhan transcript tu AI.");
+  } catch (error) {
+    setWarning(error instanceof Error ? error.message : "Khong the transcribe audio.");
+    setStatus("Transcription that bai.");
+  } finally {
+    setBusyTranscription(false);
+  }
+});
+
 elements.analyzeBtn.addEventListener("click", analyzeTranscript);
 elements.transcriptInput.addEventListener("input", analyzeTranscript);
 
@@ -360,5 +409,6 @@ window.addEventListener("beforeunload", () => {
 });
 
 checkEnvironment();
+setBusyTranscription(false);
 renderSuggestion();
 renderNotes();

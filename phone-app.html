@@ -335,9 +335,13 @@
 
       <div class="row">
         <button id="speechBtn" class="btn accent" type="button">Noi de chuyen thanh chu</button>
+        <button id="transcribeBtn" class="btn secondary" type="button">Chuyen audio thanh chu (AI)</button>
       </div>
       <p class="helper">
         Speech-to-text tren iPhone web phu thuoc vao Safari va dich vu nhan giong noi cua Apple. Neu khong hoat dong, hay kiem tra Siri dang bat.
+      </p>
+      <p class="helper">
+        Nut AI se gui file audio len backend de lay transcript. Phan nay chi hoat dong khi repo duoc deploy tren Vercel va da set OPENAI_API_KEY.
       </p>
 
       <div id="suggestionBox" class="suggestion" hidden></div>
