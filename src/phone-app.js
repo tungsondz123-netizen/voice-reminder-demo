@@ -300,17 +300,27 @@ elements.transcribeBtn.addEventListener("click", async () => {
       body: formData,
     });
 
-    const data = await response.json().catch(() => ({}));
+    const rawText = await response.text();
+    let data = {};
+    try {
+      data = rawText ? JSON.parse(rawText) : {};
+    } catch {
+      data = {};
+    }
+
     if (!response.ok) {
-      throw new Error(data.error || "Khong the transcribe audio luc nay.");
+      const message = data.error || `Khong the transcribe audio luc nay (HTTP ${response.status}).`;
+      const upstreamSuffix = data.upstream_status ? ` [OpenAI ${data.upstream_status}]` : "";
+      throw new Error(`${message}${upstreamSuffix}`);
     }
 
     elements.transcriptInput.value = data.text || "";
     analyzeTranscript();
     setStatus("Da nhan transcript tu AI.");
   } catch (error) {
-    setWarning(error instanceof Error ? error.message : "Khong the transcribe audio.");
-    setStatus("Transcription that bai.");
+    const message = error instanceof Error ? error.message : "Khong the transcribe audio.";
+    setWarning(message);
+    setStatus(`Transcription that bai. ${message}`);
   } finally {
     setBusyTranscription(false);
   }

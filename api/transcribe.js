@@ -2,20 +2,43 @@ const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
 };
 
+function toJsonResponse(payload, status) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: JSON_HEADERS,
+  });
+}
+
+function mapOpenAIError(status, payload) {
+  const message = payload?.error?.message || payload?.message || "";
+
+  if (status === 401) {
+    return "OPENAI_API_KEY khong hop le hoac da het hieu luc.";
+  }
+
+  if (status === 429) {
+    return "Tai khoan OpenAI API cua ban chua co quota hoac chua bat billing cho transcription.";
+  }
+
+  if (status === 403) {
+    return "API key hien tai khong duoc phep dung transcription model nay.";
+  }
+
+  if (message) {
+    return message;
+  }
+
+  return "OpenAI transcription failed.";
+}
+
 export default {
   async fetch(request) {
     if (request.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Method not allowed" }), {
-        status: 405,
-        headers: JSON_HEADERS,
-      });
+      return toJsonResponse({ error: "Method not allowed" }, 405);
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY on the server" }), {
-        status: 500,
-        headers: JSON_HEADERS,
-      });
+      return toJsonResponse({ error: "Missing OPENAI_API_KEY on the server" }, 500);
     }
 
     try {
@@ -24,10 +47,7 @@ export default {
       const prompt = incoming.get("prompt");
 
       if (!(file instanceof File)) {
-        return new Response(JSON.stringify({ error: "Missing audio file" }), {
-          status: 400,
-          headers: JSON_HEADERS,
-        });
+        return toJsonResponse({ error: "Missing audio file" }, 400);
       }
 
       const upstream = new FormData();
@@ -49,27 +69,32 @@ export default {
       });
 
       const text = await response.text();
-      if (!response.ok) {
-        return new Response(text || JSON.stringify({ error: "OpenAI transcription failed" }), {
-          status: response.status,
-          headers: JSON_HEADERS,
-        });
+      let parsed = null;
+      try {
+        parsed = text ? JSON.parse(text) : null;
+      } catch {
+        parsed = null;
       }
 
-      const data = text ? JSON.parse(text) : {};
-      return new Response(JSON.stringify({ text: data.text || "" }), {
-        status: 200,
-        headers: JSON_HEADERS,
-      });
+      if (!response.ok) {
+        return toJsonResponse(
+          {
+            error: mapOpenAIError(response.status, parsed),
+            upstream_status: response.status,
+            upstream_payload: parsed,
+          },
+          response.status,
+        );
+      }
+
+      const data = parsed || {};
+      return toJsonResponse({ text: data.text || "" }, 200);
     } catch (error) {
-      return new Response(
-        JSON.stringify({
-          error: error instanceof Error ? error.message : "Unexpected transcription error",
-        }),
+      return toJsonResponse(
         {
-          status: 500,
-          headers: JSON_HEADERS,
+          error: error instanceof Error ? error.message : "Unexpected transcription error",
         },
+        500,
       );
     }
   },
