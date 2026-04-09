@@ -227,6 +227,12 @@
       color: var(--text);
     }
 
+    .btn.accent {
+      background: linear-gradient(135deg, var(--accent-2), #0ea5e9);
+      color: #fff;
+      font-weight: 700;
+    }
+
     .btn:disabled {
       opacity: 0.45;
       cursor: not-allowed;
@@ -302,47 +308,56 @@
   <main class="shell">
     <section class="hero">
       <span class="chip">Phone App Demo</span>
-      <h1>App ghi chú giọng nói để test trực tiếp trên điện thoại</h1>
+      <h1>App ghi chu giong noi de test truc tiep tren dien thoai</h1>
       <p>
-        Bản này tối ưu cho điện thoại: ghi âm thật, nhập transcript nếu cần, phân tích thời gian, lưu note và phát lại audio.
+        Ban nay toi uu cho dien thoai: ghi am that, speech-to-text neu Safari ho tro, phan tich thoi gian, luu note va phat lai audio.
       </p>
     </section>
 
     <section class="panel">
-      <div id="statusBox" class="status">Đang kiểm tra khả năng hỗ trợ của trình duyệt.</div>
+      <div id="statusBox" class="status">Dang kiem tra kha nang ho tro cua trinh duyet.</div>
       <div id="warningBox" class="warning" hidden></div>
+
       <button id="recordBtn" class="record-cta" type="button">
         <span class="record-dot"></span>
-        <span id="recordLabel" class="record-label">Bắt đầu ghi</span>
+        <span id="recordLabel" class="record-label">Bat dau ghi</span>
         <span id="recordTimer" class="record-timer">00:00</span>
       </button>
+
       <div class="meter" aria-hidden="true">
         <div id="meterFill" class="meter-fill"></div>
       </div>
-      <p id="meterText" class="helper">Mức âm: 0%</p>
+      <p id="meterText" class="helper">Muc am: 0%</p>
       <audio id="draftAudio" class="audio" controls></audio>
 
-      <label class="field" for="transcriptInput">Transcript hoặc ghi chú text</label>
-      <textarea id="transcriptInput" placeholder="Nếu web chưa tự chuyển được giọng nói thành chữ trên iPhone, bạn có thể nhập nhanh nội dung ở đây để test luồng reminder. Ví dụ: mai 8 giờ gọi khách."></textarea>
+      <label class="field" for="transcriptInput">Transcript hoac ghi chu text</label>
+      <textarea id="transcriptInput" placeholder="Neu speech-to-text chua chay tren iPhone, ban van co the nhap nhanh noi dung o day. Vi du: mai 8 gio goi khach."></textarea>
+
+      <div class="row">
+        <button id="speechBtn" class="btn accent" type="button">Noi de chuyen thanh chu</button>
+      </div>
+      <p class="helper">
+        Speech-to-text tren iPhone web phu thuoc vao Safari va dich vu nhan giong noi cua Apple. Neu khong hoat dong, hay kiem tra Siri dang bat.
+      </p>
 
       <div id="suggestionBox" class="suggestion" hidden></div>
 
       <div class="row">
-        <button id="analyzeBtn" class="btn secondary" type="button">Phân tích thời gian</button>
-        <button id="saveBtn" class="btn primary" type="button">Lưu note</button>
+        <button id="analyzeBtn" class="btn secondary" type="button">Phan tich thoi gian</button>
+        <button id="saveBtn" class="btn primary" type="button">Luu note</button>
       </div>
 
       <input id="nativeAudioInput" type="file" accept="audio/*" capture hidden>
       <div class="row">
-        <button id="nativeRecordBtn" class="btn secondary" type="button">Dùng bộ ghi âm của iPhone</button>
+        <button id="nativeRecordBtn" class="btn secondary" type="button">Dung bo ghi am cua iPhone</button>
       </div>
       <p class="helper">
-        Nếu nút ghi trực tiếp không chạy trên Safari, dùng nút này để mở trình ghi âm native của điện thoại rồi quay lại app.
+        Neu nut ghi truc tiep khong chay tren Safari, dung nut nay de mo trinh ghi am native cua dien thoai roi quay lai app.
       </p>
     </section>
 
     <section class="panel">
-      <h2 class="section-title">Ghi chú đã lưu</h2>
+      <h2 class="section-title">Ghi chu da luu</h2>
       <div id="notesList" class="cards"></div>
     </section>
   </main>

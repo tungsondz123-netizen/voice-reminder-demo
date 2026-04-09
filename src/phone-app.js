@@ -3,6 +3,7 @@ import { createAudioNoteStorage } from "./modules/audio-note-storage.js";
 import { createStorage } from "./modules/storage.js";
 import { createReminderParser } from "./modules/reminder-parser.js";
 import { createNotificationService } from "./modules/notifications.js";
+import { createSpeechRecognition } from "./modules/speech-recognition.js";
 
 const storage = createStorage();
 const audioStorage = createAudioNoteStorage();
@@ -22,6 +23,7 @@ const elements = {
   suggestionBox: document.querySelector("#suggestionBox"),
   analyzeBtn: document.querySelector("#analyzeBtn"),
   saveBtn: document.querySelector("#saveBtn"),
+  speechBtn: document.querySelector("#speechBtn"),
   nativeAudioInput: document.querySelector("#nativeAudioInput"),
   nativeRecordBtn: document.querySelector("#nativeRecordBtn"),
   notesList: document.querySelector("#notesList"),
@@ -74,14 +76,16 @@ function renderSuggestion() {
     elements.suggestionBox.textContent = "";
     return;
   }
+
   elements.suggestionBox.hidden = false;
-  elements.suggestionBox.textContent = `Đề xuất reminder: ${state.suggestion.title} lúc ${formatDateTime(state.suggestion.dueAt)}`;
+  elements.suggestionBox.textContent = `De xuat reminder: ${state.suggestion.title} luc ${formatDateTime(state.suggestion.dueAt)}`;
 }
 
 function setDraftAudio(fileOrBlob, durationSeconds = null) {
   if (state.draftAudio?.url) {
     URL.revokeObjectURL(state.draftAudio.url);
   }
+
   const url = URL.createObjectURL(fileOrBlob);
   state.draftAudio = { blob: fileOrBlob, url, durationSeconds };
   elements.draftAudio.src = url;
@@ -91,10 +95,12 @@ async function attachAudio(note) {
   if (!note.audioId || state.audioUrls.has(note.audioId)) {
     return state.audioUrls.get(note.audioId) ?? "";
   }
+
   const blob = await audioStorage.getAudio(note.audioId);
   if (!blob) {
     return "";
   }
+
   const url = URL.createObjectURL(blob);
   state.audioUrls.set(note.audioId, url);
   return url;
@@ -102,14 +108,15 @@ async function attachAudio(note) {
 
 async function renderNotes() {
   if (!state.notes.length) {
-    elements.notesList.innerHTML = '<div class="empty">Chưa có note nào. Hãy ghi âm một note đầu tiên trên điện thoại.</div>';
+    elements.notesList.innerHTML = '<div class="empty">Chua co note nao. Hay tao mot note dau tien tren dien thoai.</div>';
     return;
   }
 
   const cards = await Promise.all(state.notes.map(async (note) => {
     const reminder = state.reminders.find((item) => item.id === note.reminderId) ?? null;
     const audioUrl = await attachAudio(note);
-    const body = note.transcript?.trim() || "Voice note chưa có transcript.";
+    const body = note.transcript?.trim() || "Voice note chua co transcript.";
+
     return `
       <article class="card">
         <h3>${body.slice(0, 40)}${body.length > 40 ? "..." : ""}</h3>
@@ -117,7 +124,7 @@ async function renderNotes() {
         <div class="meta">
           <span class="pill">${formatDateTime(note.createdAt)}</span>
           ${note.durationSeconds ? `<span class="pill">${note.durationSeconds}s</span>` : ""}
-          ${reminder ? `<span class="pill">Nhắc lúc ${formatDateTime(reminder.dueAt)}</span>` : '<span class="pill">Chưa có reminder</span>'}
+          ${reminder ? `<span class="pill">Nhac luc ${formatDateTime(reminder.dueAt)}</span>` : '<span class="pill">Chua co reminder</span>'}
         </div>
         ${audioUrl ? `<audio controls src="${audioUrl}"></audio>` : ""}
       </article>
@@ -145,14 +152,30 @@ function updateTimer() {
     elements.recordTimer.textContent = "00:00";
     return;
   }
+
   const elapsed = Math.max(0, Math.floor((Date.now() - state.recordingStartedAt) / 1000));
   elements.recordTimer.textContent = formatDuration(elapsed);
 }
 
+const speechRecognition = createSpeechRecognition({
+  onStateChange: ({ isListening, statusText }) => {
+    elements.speechBtn.textContent = isListening ? "Dung speech-to-text" : "Noi de chuyen thanh chu";
+    setStatus(statusText);
+  },
+  onTranscript: (transcript) => {
+    elements.transcriptInput.value = transcript;
+    analyzeTranscript();
+  },
+  onError: (message) => {
+    setWarning(message);
+    elements.speechBtn.textContent = "Noi de chuyen thanh chu";
+  },
+});
+
 const recorder = createAudioRecorder({
   onLevel: (level) => {
     elements.meterFill.style.width = `${level}%`;
-    elements.meterText.textContent = `Mức âm: ${level}%`;
+    elements.meterText.textContent = `Muc am: ${level}%`;
   },
   onStatus: (message) => {
     setStatus(message);
@@ -161,7 +184,7 @@ const recorder = createAudioRecorder({
     setWarning(message);
     stopTimer();
     elements.recordBtn.classList.remove("is-recording");
-    elements.recordLabel.textContent = "Bắt đầu ghi";
+    elements.recordLabel.textContent = "Bat dau ghi";
     state.recordingStartedAt = 0;
     updateTimer();
   },
@@ -173,50 +196,88 @@ const recorder = createAudioRecorder({
     state.draftAudio = { blob, url, durationSeconds };
     elements.draftAudio.src = url;
     elements.recordBtn.classList.remove("is-recording");
-    elements.recordLabel.textContent = "Ghi lại";
+    elements.recordLabel.textContent = "Ghi lai";
     elements.recordTimer.textContent = formatDuration(durationSeconds);
-    setStatus("Đã thu xong. Bạn có thể nhập transcript rồi lưu note.");
+    setStatus("Da thu xong. Ban co the sua transcript roi luu note.");
   },
 });
 
 function checkEnvironment() {
   if (!window.isSecureContext) {
-    setWarning("Trên iPhone, trang này cần mở bằng HTTPS để dùng microphone.");
+    setWarning("Tren iPhone, trang nay can mo bang HTTPS de dung microphone.");
   }
+
   if (!recorder.supportsRecording()) {
     elements.recordBtn.disabled = true;
-    setWarning("Trình duyệt hiện tại không hỗ trợ ghi âm web. Trên iPhone nên dùng Safari mới.");
-    setStatus("Không thể bắt đầu app demo.");
+    setWarning("Trinh duyet hien tai khong ho tro ghi am web. Tren iPhone nen dung Safari moi.");
+    setStatus("Khong the bat dau app demo.");
     return;
   }
-  setStatus("Sẵn sàng. Bấm Bắt đầu ghi để tạo voice note đầu tiên.");
+
+  if (speechRecognition.isSupported()) {
+    setStatus("San sang. Ban co the ghi am hoac bam speech-to-text de noi thanh chu.");
+    return;
+  }
+
+  setStatus("San sang. Speech-to-text co the khong ho tro tren may nay, nhung ban van co the ghi am va nhap transcript thu cong.");
 }
 
 elements.recordBtn.addEventListener("click", async () => {
   setWarning("");
+
+  if (speechRecognition.isListening()) {
+    speechRecognition.stop();
+  }
+
   if (recorder.isRecording()) {
     recorder.stop();
     return;
   }
+
   const started = await recorder.start();
   if (!started) {
     return;
   }
+
   state.recordingStartedAt = Date.now();
   updateTimer();
   stopTimer();
   state.timerId = setInterval(updateTimer, 250);
   elements.recordBtn.classList.add("is-recording");
-  elements.recordLabel.textContent = "Dừng ghi";
+  elements.recordLabel.textContent = "Dung ghi";
+});
+
+elements.speechBtn.addEventListener("click", () => {
+  setWarning("");
+
+  if (!speechRecognition.isSupported()) {
+    setWarning("Speech-to-text khong duoc Safari hien tai ho tro. Tren iPhone, thu cap nhat iOS va bat Siri.");
+    return;
+  }
+
+  if (recorder.isRecording()) {
+    recorder.stop();
+  }
+
+  if (speechRecognition.isListening()) {
+    speechRecognition.stop();
+    return;
+  }
+
+  speechRecognition.start(elements.transcriptInput.value);
 });
 
 elements.analyzeBtn.addEventListener("click", analyzeTranscript);
 elements.transcriptInput.addEventListener("input", analyzeTranscript);
+
 elements.nativeRecordBtn.addEventListener("click", () => {
+  if (speechRecognition.isListening()) {
+    speechRecognition.stop();
+  }
   elements.nativeAudioInput.click();
 });
 
-elements.nativeAudioInput.addEventListener("change", async (event) => {
+elements.nativeAudioInput.addEventListener("change", (event) => {
   const [file] = event.target.files ?? [];
   if (!file) {
     return;
@@ -225,16 +286,16 @@ elements.nativeAudioInput.addEventListener("change", async (event) => {
   setWarning("");
   setDraftAudio(file, null);
   elements.recordBtn.classList.remove("is-recording");
-  elements.recordLabel.textContent = "Bắt đầu ghi";
+  elements.recordLabel.textContent = "Bat dau ghi";
   elements.recordTimer.textContent = "00:00";
-  setStatus("Đã nhận file audio từ bộ ghi âm của iPhone. Bạn có thể nhập transcript rồi lưu note.");
+  setStatus("Da nhan file audio tu bo ghi am cua iPhone. Ban co the dung speech-to-text hoac sua transcript roi luu note.");
   event.target.value = "";
 });
 
 elements.saveBtn.addEventListener("click", async () => {
   const transcript = elements.transcriptInput.value.trim();
   if (!state.draftAudio && !transcript) {
-    setWarning("Cần có ít nhất audio hoặc transcript để lưu note.");
+    setWarning("Can co it nhat audio hoac transcript de luu note.");
     return;
   }
 
@@ -279,7 +340,7 @@ elements.saveBtn.addEventListener("click", async () => {
   state.draftAudio = null;
   renderSuggestion();
   await renderNotes();
-  setStatus("Đã lưu note trên điện thoại.");
+  setStatus("Da luu note tren dien thoai.");
 });
 
 notifications.restoreScheduledChecks(() => {
@@ -290,6 +351,9 @@ notifications.restoreScheduledChecks(() => {
 window.addEventListener("beforeunload", () => {
   stopTimer();
   recorder.destroy();
+  if (speechRecognition.isListening()) {
+    speechRecognition.stop();
+  }
   for (const url of state.audioUrls.values()) {
     URL.revokeObjectURL(url);
   }
